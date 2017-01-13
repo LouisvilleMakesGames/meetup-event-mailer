@@ -1,0 +1,26 @@
+{
+  "name": "meetup-event-mailer",
+  "version": "0.0.0",
+  "description": "sends a list of meetup event data via email",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "contributors": [
+    "Alex Bezuska <abezuska@gmail.com> (http://alexbezuska.com/)",
+    "Eric Lathrop <eric@ericlathrop.com> (http://ericlathrop.com/)"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LouisvilleMakesGames/meetup-event-mailer.git"
+  },
+  "bugs": {
+    "type": "git",
+    "url": "https://github.com/LouisvilleMakesGames/meetup-event-mailer/issues"
+  },
+  "dependencies": {
+    "async": "^2.0.1",
+    "ical": "^0.5.0"
+  }
+}

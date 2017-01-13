@@ -25,7 +25,7 @@ var streetMatch = /612.*washington/i;
 var alleyMatch = /607.*main/i;
 
 function matchRegEx(string, exp) {
-  string.match(exp) === null;
+  return string.match(exp) === null;
 }
 
 function isValidEvent (ev) {

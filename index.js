@@ -21,8 +21,8 @@ function objectValues(obj) {
 
 
 var warpzoneMatch = /warp zone/i;
-var streetMatch = /612.*washington/i;
-var alleyMatch = /607.*main/i;
+var streetMatch = /607.*main/i;
+var alleyMatch = /612.*washington/i;
 
 function matchRegEx(string, exp) {
   return string.match(exp) === null;

@@ -18,10 +18,16 @@ async.map(calendars, getCalendar, function(err, results){
   var eventArrays = results.map(objectValues);
   var events = Array.prototype.concat.apply ([], eventArrays);
 
-  var messages = events.filter(isValidEvent).map(eventToMessage);
+  var messages = events.filter(isValidEvent).sort(compareEventsByStartDate).map(eventToMessage);
   console.log(messages);
 
 });
+
+function compareEventsByStartDate (a,b) {
+  var startA = new Date(a.start);
+  var startB = new Date(b.start);
+  return startA - startB;
+}
 
 function getCalendar (url, callback) {
   ical.fromURL(url, {}, callback);

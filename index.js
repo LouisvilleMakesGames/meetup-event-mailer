@@ -1,20 +1,42 @@
 var ical = require('ical');
-var calendarUrl = 'https://calendar.google.com/calendar/ical/louisvillemakesgames.org_jq7pden9rgkcpkh6pnni3bmvjg%40group.calendar.google.com/public/basic.ics';
+var async = require('async');
 
-ical.fromURL(calendarUrl, {}, generateEmail);
+var calendars = [ 'https://calendar.google.com/calendar/ical/louisvillemakesgames.org_jq7pden9rgkcpkh6pnni3bmvjg%40group.calendar.google.com/public/basic.ics',
+'https://www.meetup.com/GameDevLou/events/ical/'
+];
 
 
-function generateEmail (err, data) {
+// generateEmail
+
+async.map(calendars, getCalendar, function(err, results){
   if (err) {
     console.error(err);
     return;
-  }
+   }
 
-  var messages = objectValues(data).filter(isValidEvent).map(eventToMessage);
+  var eventArrays = results.map(objectValues);
+  var events = Array.prototype.concat.apply ([], eventArrays);
+
+  var messages = events.filter(isValidEvent).map(eventToMessage);
   console.log(messages);
 
+});
+
+function getCalendar (url, callback) {
+  ical.fromURL(url, {}, callback);
 }
 
+// function generateEmail (err, data) {
+//   if (err) {
+//     console.error(err);
+//     return;
+//   }
+//
+//
+// }
+
+
+var tha
 function objectValues(obj) {
   return Object.keys(obj).map( (key) => obj[key] );
 }
@@ -32,6 +54,14 @@ function isValidEvent (ev) {
 
   if (ev.type !== "VEVENT") {
     return false;
+  }
+  if (!ev.location){
+    if (ev.url && ev.url.indexOf("https://www.meetup.com/GameDevLou/") !== -1) {
+      ev.location = "Warp Zone";
+    }
+    else {
+      return false;
+    }
   }
   if (matchRegEx(ev.location, warpzoneMatch)
     && matchRegEx(ev.location, streetMatch)
@@ -61,54 +91,3 @@ function eventToMessage (ev) {
   return message;
 }
 
-/*
-var eventsample = { type: 'VEVENT',
-  params: [],
-  start: { 2016-01-13T19:00:00.000Z tz: 'America/New_York' },
-  end: { 2016-01-13T20:00:00.000Z tz: 'America/New_York' },
-  rrule:
-   { _string: null,
-     _cache: { all: false, before: [], after: [], between: [] },
-     origOptions:
-      { freq: 2,
-        byweekday: [Object],
-        dtstart: 2016-01-13T19:00:00.000Z },
-     options:
-      { freq: 2,
-        dtstart: 2016-01-13T19:00:00.000Z,
-        interval: 1,
-        wkst: 0,
-        count: null,
-        until: null,
-        bysetpos: null,
-        bymonth: null,
-        bymonthday: [],
-        byyearday: null,
-        byweekno: null,
-        byweekday: [Object],
-        byhour: [Object],
-        byminute: [Object],
-        bysecond: [Object],
-        byeaster: null,
-        bynmonthday: [],
-        bynweekday: null },
-     timeset: [ [Object] ] },
-  dtstamp: '20170113T023512Z',
-  uid: 'nj8ihu9nve8ipfqidfssuum76o@google.com',
-  created: '20160921T172216Z',
-  description: '',
-  'last-modified': '20160921T172936Z',
-  location: '',
-  sequence: '0',
-  status: 'CONFIRMED',
-  summary: '#IndieDevHour',
-  transparency: 'OPAQUE',
-  '00EC7E30-9C66-4957-8660-BBC3AAF1CAE1':
-   { type: 'VALARM',
-     params: [],
-     action: 'NONE',
-     trigger: { params: [Object], val: '19760401T005545Z' },
-     'WR-ALARMUID': '00EC7E30-9C66-4957-8660-BBC3AAF1CAE1',
-     uid: '00EC7E30-9C66-4957-8660-BBC3AAF1CAE1',
-     acknowledged: '20160224T183112Z',
-     'APPLE-DEFAULT-ALARM': 'TRUE' } } */

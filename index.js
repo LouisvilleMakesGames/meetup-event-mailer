@@ -1,5 +1,13 @@
 var ical = require('ical');
 var async = require('async');
+var nodemailer = require('nodemailer');
+
+var emailAddress = "warpbot@louisvillemakesgames.org";
+var password = process.env.WARPBOT_PASSWORD;
+
+var smtpParams = 'smtps://' + encodeURIComponent(emailAddress) + ':' + encodeURIComponent(password) + '@smtp.gmail.com';
+
+var transporter = nodemailer.createTransport(smtpParams);
 
 var today = new Date();
 var cutoffDate = new Date();
@@ -18,10 +26,28 @@ async.map(calendars, getCalendar, function(err, results){
   var eventArrays = results.map(objectValues);
   var events = Array.prototype.concat.apply ([], eventArrays);
 
-  var messages = events.filter(isValidEvent).sort(compareEventsByStartDate).map(eventToMessage);
-  console.log(messages);
+  var filteredEvents = events.filter(isValidEvent).sort(compareEventsByStartDate);
+  sendEmail(filteredEvents, afterSent);
 
 });
+
+function sendEmail (events, callback) {
+  var mailOptions = {
+      from: '"Warp Bot" <'+ emailAddress +'>',
+      to: 'abezuska@louisvillemakesgames.org',//, directors@louisvillemakesgames.org',
+      subject: 'Hello ✔',
+      text: events.map(eventToMessage).join("\n")//,  html: '<b>Hello world 🐴</b>'
+  };
+
+  transporter.sendMail(mailOptions, callback);
+}
+
+function afterSent(error, info){
+    if(error){
+        return console.log(error);
+    }
+    console.log('Message sent: ' + info.response);
+}
 
 function compareEventsByStartDate (a,b) {
   var startA = new Date(a.start);

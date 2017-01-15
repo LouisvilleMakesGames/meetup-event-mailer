@@ -1,12 +1,13 @@
 var ical = require('ical');
 var async = require('async');
 
+var today = new Date();
+var cutoffDate = new Date();
+cutoffDate.setMonth(cutoffDate.getMonth() + 1);
+
 var calendars = [ 'https://calendar.google.com/calendar/ical/louisvillemakesgames.org_jq7pden9rgkcpkh6pnni3bmvjg%40group.calendar.google.com/public/basic.ics',
 'https://www.meetup.com/GameDevLou/events/ical/'
 ];
-
-
-// generateEmail
 
 async.map(calendars, getCalendar, function(err, results){
   if (err) {
@@ -26,21 +27,9 @@ function getCalendar (url, callback) {
   ical.fromURL(url, {}, callback);
 }
 
-// function generateEmail (err, data) {
-//   if (err) {
-//     console.error(err);
-//     return;
-//   }
-//
-//
-// }
-
-
-var tha
 function objectValues(obj) {
   return Object.keys(obj).map( (key) => obj[key] );
 }
-
 
 var warpzoneMatch = /warp zone/i;
 var streetMatch = /607.*main/i;
@@ -69,6 +58,18 @@ function isValidEvent (ev) {
   ) {
     return false;
   }
+
+
+  var start = new Date(ev.start);
+  var end = new Date(ev.end);
+
+  if (end < today) {
+    return false;
+  }
+  if (start > cutoffDate) {
+    return false;
+  }
+
   return true;
 }
 
@@ -79,9 +80,9 @@ function eventToMessage (ev) {
   var message = [
     ev.location,
     " ===== ",
-    ev.summary//,
+    ev.summary,
     // "from",
-    // start.toLocaleDateString(),
+     start.toLocaleDateString(),
     // start.toLocaleTimeString(),
     // "to",
     // end.toLocaleDateString(),
@@ -90,4 +91,3 @@ function eventToMessage (ev) {
 
   return message;
 }
-

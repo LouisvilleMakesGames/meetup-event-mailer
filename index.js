@@ -1,11 +1,24 @@
 var ical = require('ical');
 var async = require('async');
 var nodemailer = require('nodemailer');
+var moment = require('moment');
+var fs = require("fs");
+var handlebars = require("handlebars");
 
-var emailAddress = "warpbot@louisvillemakesgames.org";
-var password = process.env.WARPBOT_PASSWORD;
 
-var smtpParams = 'smtps://' + encodeURIComponent(emailAddress) + ':' + encodeURIComponent(password) + '@smtp.gmail.com';
+config = {
+  fromName: "Warp Bot",
+  emailAddress: "warpbot@louisvillemakesgames.org",
+  password : process.env.WARPBOT_PASSWORD,
+  to: "abezuska@louisvillemakesgames.org",
+  subject: 'Warp Zone Louisville - Security door schedule',
+  template: './template.html',
+  calendars: [ 'https://calendar.google.com/calendar/ical/louisvillemakesgames.org_jq7pden9rgkcpkh6pnni3bmvjg%40group.calendar.google.com/public/basic.ics',
+  'https://www.meetup.com/GameDevLou/events/ical/'
+  ]
+};
+
+var smtpParams = 'smtps://' + encodeURIComponent(config.emailAddress) + ':' + encodeURIComponent(config.password) + '@smtp.gmail.com';
 
 var transporter = nodemailer.createTransport(smtpParams);
 
@@ -13,11 +26,7 @@ var today = new Date();
 var cutoffDate = new Date();
 cutoffDate.setMonth(cutoffDate.getMonth() + 1);
 
-var calendars = [ 'https://calendar.google.com/calendar/ical/louisvillemakesgames.org_jq7pden9rgkcpkh6pnni3bmvjg%40group.calendar.google.com/public/basic.ics',
-'https://www.meetup.com/GameDevLou/events/ical/'
-];
-
-async.map(calendars, getCalendar, function(err, results){
+async.map(config.calendars, getCalendar, function(err, results){
   if (err) {
     console.error(err);
     return;
@@ -32,14 +41,33 @@ async.map(calendars, getCalendar, function(err, results){
 });
 
 function sendEmail (events, callback) {
+  var template = fs.readFileSync(config.template, "utf8");
+  var template = handlebars.compile(template);
   var mailOptions = {
-      from: '"Warp Bot" <'+ emailAddress +'>',
-      to: 'abezuska@louisvillemakesgames.org',//, directors@louisvillemakesgames.org',
-      subject: 'Hello ✔',
-      text: events.map(eventToMessage).join("\n")//,  html: '<b>Hello world 🐴</b>'
+      from: '"'+ config.fromName +'" <'+ config.emailAddress +'>',
+      to: config.to,
+      subject: config.subject,
+      text: template(events.map(formatData)),
+      html: template(events.map(formatData)),
   };
 
+  //console.log( template( events.map(formatData) ));
   transporter.sendMail(mailOptions, callback);
+}
+
+
+function formatData (ev) {
+  var obj = {};
+    obj.name = ev.summary,
+    obj.startDate = moment(ev.start).format('MMM DD');
+    obj.startTime = moment(ev.start).subtract(15, 'minutes').format('h:mm a');
+    obj.endDate = moment(ev.end).format('MMM DD');
+    if (obj.startDate === obj.endDate){
+      obj.endDate = "";
+    }
+    obj.endTime = moment(ev.end).add(15, 'minutes').format('h:mm a');
+
+  return obj;
 }
 
 function afterSent(error, info){
@@ -72,7 +100,6 @@ function matchRegEx(string, exp) {
 }
 
 function isValidEvent (ev) {
-
   if (ev.type !== "VEVENT") {
     return false;
   }
@@ -90,36 +117,13 @@ function isValidEvent (ev) {
   ) {
     return false;
   }
-
-
   var start = new Date(ev.start);
   var end = new Date(ev.end);
-
   if (end < today) {
     return false;
   }
   if (start > cutoffDate) {
     return false;
   }
-
   return true;
-}
-
-function eventToMessage (ev) {
-  var start = new Date(ev.start);
-  var end = new Date(ev.end);
-
-  var message = [
-    ev.location,
-    " ===== ",
-    ev.summary,
-    // "from",
-     start.toLocaleDateString(),
-    // start.toLocaleTimeString(),
-    // "to",
-    // end.toLocaleDateString(),
-    // end.toLocaleTimeString()
-  ].join(" ");
-
-  return message;
 }
